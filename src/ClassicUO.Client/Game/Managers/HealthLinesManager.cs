@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 using System;
+using System.Runtime.CompilerServices;
 using ClassicUO.Configuration;
 using ClassicUO.Game.Data;
 using ClassicUO.Game.GameObjects;
@@ -24,9 +25,56 @@ namespace ClassicUO.Game.Managers
         private static readonly Texture2D _oldEdge = SolidColorTextureCache.GetTexture(Color.Black);
         private static readonly Texture2D _oldBack = SolidColorTextureCache.GetTexture(Color.Red);
 
+        private float _cachedAlphaMod = -1f;
+        private Texture2D _cachedEdge;
+        private Texture2D _cachedBack;
+        private Texture2D _cachedMana;
+
         private readonly World _world;
 
         public HealthLinesManager(World world) { _world = world; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int ChebyshevTileDistanceToPlayer(Mobile mobile, World world)
+        {
+            PlayerMobile pl = world.Player;
+
+            if (pl == null)
+            {
+                return 0x7FFF;
+            }
+
+            int px = pl.X;
+            int py = pl.Y;
+
+            if (pl.Steps.Count != 0)
+            {
+                ref Mobile.Step s = ref pl.Steps.Back();
+                px = s.X;
+                py = s.Y;
+            }
+
+            int mx = mobile.X;
+            int my = mobile.Y;
+
+            if (mobile.Steps.Count != 0)
+            {
+                ref Mobile.Step s = ref mobile.Steps.Back();
+                mx = s.X;
+                my = s.Y;
+            }
+
+            return Math.Max(Math.Abs(mx - px), Math.Abs(my - py));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool OverlapsGameViewport(Rectangle gameViewport, int x, int y, int w, int h)
+        {
+            return x < gameViewport.Right
+                && x + w > gameViewport.Left
+                && y < gameViewport.Bottom
+                && y + h > gameViewport.Top;
+        }
 
         public bool IsEnabled =>
             ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.ShowMobilesHP;
@@ -35,6 +83,7 @@ namespace ClassicUO.Game.Managers
         {
             var camera = Client.Game.Scene.Camera;
             int mode = ProfileManager.CurrentProfile.MobileHPType;
+            int showWhen = ProfileManager.CurrentProfile.MobileHPShowWhen;
 
             if (mode < 0)
             {
@@ -44,6 +93,13 @@ namespace ClassicUO.Game.Managers
             var useNewTargetSystem = ProfileManager.CurrentProfile.UseNewTargetSystem;
             var animations = Client.Game.UO.Animations;
             var isEnabled = IsEnabled;
+            int hpTileRange = Math.Clamp(
+                Math.Max((int) _world.ClientViewRange, Constants.MOBILE_HP_OVERLAY_TILE_RANGE),
+                Constants.MIN_VIEW_RANGE,
+                Constants.MOBILE_HP_OVERLAY_TILE_MAX
+            );
+
+            Rectangle gameViewport = camera.Bounds;
 
             foreach (Mobile mobile in _world.Mobiles.Values)
             {
@@ -78,6 +134,27 @@ namespace ClassicUO.Game.Managers
                 int current = mobile.Hits;
                 int max = mobile.HitsMax;
                 bool fallbackToLine = mode == 0 && max == 0;
+
+                if (!forceDraw && max == 0)
+                {
+                    if (ChebyshevTileDistanceToPlayer(mobile, _world) > hpTileRange)
+                    {
+                        continue;
+                    }
+
+                    if (
+                        mobile.Serial != _world.Player.Serial
+                        && mobile.HitsRequest == HitsRequestStatus.None
+                    )
+                    {
+                        GameActions.RequestMobileStatus(_world, mobile.Serial);
+                    }
+                }
+
+                if (!forceDraw && showWhen == 1 && max > 0 && current == max)
+                {
+                    continue;
+                }
 
                 Point p = mobile.RealScreenPosition;
                 p.X += (int)mobile.Offset.X + 22 + 5;
@@ -131,14 +208,7 @@ namespace ClassicUO.Game.Managers
                                     offsetY += ohHeight + 5;
                                 }
 
-                                if (
-                                    !(
-                                        p1.X < 0
-                                        || p1.X > camera.Bounds.Width - hitsTexture.Width
-                                        || p1.Y < 0
-                                        || p1.Y > camera.Bounds.Height
-                                    )
-                                )
+                                if (OverlapsGameViewport(gameViewport, p1.X, p1.Y, hitsTexture.Width, hitsTexture.Height))
                                 {
                                     hitsTexture.Draw(batcher, p1.X, p1.Y, layerDepth);
                                 }
@@ -158,12 +228,7 @@ namespace ClassicUO.Game.Managers
                 p.X -= BAR_WIDTH_HALF;
                 p.Y -= BAR_HEIGHT_HALF;
 
-                if (p.X < -BAR_WIDTH || p.X > camera.Bounds.Width)
-                {
-                    continue;
-                }
-
-                if (p.Y < -BAR_HEIGHT || p.Y > camera.Bounds.Height)
+                if (!OverlapsGameViewport(gameViewport, p.X, p.Y, BAR_WIDTH, BAR_HEIGHT))
                 {
                     continue;
                 }
@@ -308,24 +373,24 @@ namespace ClassicUO.Game.Managers
                     bigHalf = bigW / 2 - 17;
                 }
 
-                Texture2D edgeH = SolidColorTextureCache.GetTexture(Color.Black * alphaMod);
-                Texture2D backH = SolidColorTextureCache.GetTexture(Color.Red * alphaMod);
-                Texture2D edgeM = SolidColorTextureCache.GetTexture(Color.Black * alphaMod);
-                Texture2D backM = SolidColorTextureCache.GetTexture(Color.Red * alphaMod);
-                Texture2D edgeS = SolidColorTextureCache.GetTexture(Color.Black * alphaMod);
-                Texture2D backS = SolidColorTextureCache.GetTexture(Color.Red * alphaMod);
+                if (alphaMod != _cachedAlphaMod)
+                {
+                    _cachedAlphaMod = alphaMod;
+                    _cachedEdge = SolidColorTextureCache.GetTexture(Color.Black * alphaMod);
+                    _cachedBack = SolidColorTextureCache.GetTexture(Color.Red * alphaMod);
+                    _cachedMana = SolidColorTextureCache.GetTexture(Color.CornflowerBlue * alphaMod);
+                }
 
                 (Color hpcolor, int maxhp, int maxmana, int maxstam) = CalcUnderlines(mobile, bigW, alphaMod);
-                Color manaColor = Color.CornflowerBlue * alphaMod;
 
                 batcher.Draw(
-                    edgeH,
+                    _cachedEdge,
                     new Rectangle(x - 1 - bigHalf, y - 1, bigW + 2, bigH + 1),
                     hueVec,
                     layerDepth
                 );
                 batcher.Draw(
-                    backH,
+                    _cachedBack,
                     new Rectangle(x - bigHalf + maxhp, y, bigW - maxhp, bigH),
                     hueVec,
                     layerDepth
@@ -338,26 +403,26 @@ namespace ClassicUO.Game.Managers
                 );
 
                 batcher.Draw(
-                    edgeM,
+                    _cachedEdge,
                     new Rectangle(x - 1 - bigHalf, y + bigH + ySpacing - 1, bigW + 2, bigH + 1),
                     hueVec,
                     layerDepth
                 );
                 batcher.Draw(
-                    backM,
+                    _cachedBack,
                     new Rectangle(x - bigHalf + maxmana, y + bigH + ySpacing, bigW - maxmana, bigH),
                     hueVec,
                     layerDepth
                 );
                 batcher.Draw(
-                    SolidColorTextureCache.GetTexture(manaColor),
+                    _cachedMana,
                     new Rectangle(x - bigHalf, y + bigH + ySpacing, maxmana, bigH),
                     hueVec,
                     layerDepth
                 );
 
                 batcher.Draw(
-                    edgeS,
+                    _cachedEdge,
                     new Rectangle(
                         x - 1 - bigHalf,
                         y + bigH + bigH + ySpacing + ySpacing - 1,
@@ -368,7 +433,7 @@ namespace ClassicUO.Game.Managers
                     layerDepth
                 );
                 batcher.Draw(
-                    backS,
+                    _cachedBack,
                     new Rectangle(
                         x - bigHalf + maxstam,
                         y + bigH + bigH + ySpacing + ySpacing,
@@ -379,7 +444,7 @@ namespace ClassicUO.Game.Managers
                     layerDepth
                 );
                 batcher.Draw(
-                    SolidColorTextureCache.GetTexture(manaColor),
+                    _cachedMana,
                     new Rectangle(x - bigHalf, y + bigH + bigH + ySpacing + ySpacing, maxstam, bigH),
                     hueVec,
                     layerDepth

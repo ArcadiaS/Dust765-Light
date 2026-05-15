@@ -69,7 +69,7 @@ namespace ClassicUO.Game
         public const ushort TREE_REPLACE_GRAPHIC = 0x0E59;
 
         public const int MIN_CIRCLE_OF_TRANSPARENCY_RADIUS = 50;
-        public const int MAX_CIRCLE_OF_TRANSPARENCY_RADIUS = 200;
+        public const int MAX_CIRCLE_OF_TRANSPARENCY_RADIUS = 1000;
 
         public const int MAX_ABILITIES_COUNT = 32;
 
@@ -79,6 +79,8 @@ namespace ClassicUO.Game
 
         public const int MIN_VIEW_RANGE = 5;
         public const int MAX_VIEW_RANGE = 24;
+        public const int MOBILE_HP_OVERLAY_TILE_RANGE = 32;
+        public const int MOBILE_HP_OVERLAY_TILE_MAX = 32;
         public const int MAX_CONTAINER_OPENED_ON_GROUND_RANGE = 3;
 
         public const int OUT_RANGE_COLOR = 0x038B;

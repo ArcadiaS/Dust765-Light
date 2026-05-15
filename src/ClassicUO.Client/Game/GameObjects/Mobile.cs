@@ -144,6 +144,9 @@ namespace ClassicUO.Game.GameObjects
         public bool IsFlying =>
             Client.Game.UO.Version >= ClientVersion.CV_7000 && (Flags & Flags.Poisoned) != 0;
 
+        public bool IsFlyingVisual =>
+            IsFlying && !(IsGargoyle && ProfileManager.CurrentProfile?.ForceGargoyleWalk == true);
+
         public virtual bool InWarMode
         {
             get => (Flags & Flags.WarMode) != 0;
@@ -167,6 +170,15 @@ namespace ClassicUO.Game.GameObjects
 
         public bool IsGargoyle =>
             Client.Game.UO.Version >= ClientVersion.CV_7000 && Graphic == 0x029A || Graphic == 0x029B;
+
+        public bool IsInvulnerableMannequin =>
+            NotorietyFlag == NotorietyFlag.Invulnerable
+            && IsHuman
+            && !string.IsNullOrEmpty(Name)
+            && (
+                Name.Contains("mannequin", StringComparison.OrdinalIgnoreCase)
+                || Name.Contains("manequin", StringComparison.OrdinalIgnoreCase)
+            );
 
         public bool IsMounted
         {
@@ -461,7 +473,7 @@ namespace ClassicUO.Game.GameObjects
                         return;
                     }
 
-                    if (IsGargoyle && IsFlying)
+                    if (IsGargoyle && IsFlyingVisual)
                     {
                         if (RandomHelper.GetValue(0, 2) != 0)
                         {
@@ -723,21 +735,6 @@ namespace ClassicUO.Game.GameObjects
                         || IsFlying;
                     bool run = step.Run;
 
-                    // Client auto movements sync.
-                    // When server sends more than 1 packet in an amount of time less than 100ms if mounted (or 200ms if walking mount)
-                    // we need to remove the "teleport" effect.
-                    // When delay == 0 means that we received multiple movement packets in a single frame, so the patch becomes quite useless.
-                    if (!mounted && Serial != World.Player && Steps.Count > 1 && delay > 0)
-                    {
-                        mounted =
-                            delay
-                            <= (
-                                run
-                                    ? MovementSpeed.STEP_DELAY_MOUNT_RUN
-                                    : MovementSpeed.STEP_DELAY_MOUNT_WALK
-                            );
-                    }
-
                     int maxDelay =
                         MovementSpeed.TimeToCompleteMovement(run, mounted)
                         - (int)Client.Game.FrameDelay[1];
@@ -852,16 +849,16 @@ namespace ClassicUO.Game.GameObjects
                             return;
                         }
 
+                        if (TNext != null || TPrevious != null)
+                        {
+                            AddToTile();
+                        }
+
                         UpdateScreenPosition();
 
                         if (World.InGame && Serial == World.Player)
                         {
                             World.Player.CloseRangedGumps();
-                        }
-
-                        if (TNext != null || TPrevious != null)
-                        {
-                            AddToTile();
                         }
 
                         LastStepTime = Time.Ticks;
@@ -938,7 +935,7 @@ namespace ClassicUO.Game.GameObjects
 
             Point p = RealScreenPosition;
 
-            if (IsGargoyle && IsFlying)
+            if (IsGargoyle && IsFlyingVisual)
             {
                 p.Y -= 22;
             }
@@ -978,7 +975,11 @@ namespace ClassicUO.Game.GameObjects
                 health
                 && HitsTexture != null
                 && mode != 1
-                && (alwaysHP >= 1 && Hits != HitsMax || alwaysHP == 0)
+                && (
+                    alwaysHP == 0
+                    || alwaysHP == 2
+                    || (alwaysHP == 1 && Hits != HitsMax)
+                )
             )
             {
                 p.Y -= HitsTexture.Height;

@@ -45,6 +45,7 @@ namespace ClassicUO.Game.Scenes
 
         private const float MAX_LAYER_DEPTH = 0x8000;
         private uint _time_cleanup = Time.Ticks + 5000;
+        private ushort _lastPreloadX, _lastPreloadY;
         private bool _alphaChanged;
         private long _alphaTimer;
         private bool _forceStopScene;
@@ -75,6 +76,9 @@ namespace ClassicUO.Game.Scenes
             _world = world;
             _useItemQueue = new UseItemQueue(world);
         }
+
+        public World World => _world;
+        public MacroManager Macros => _world.Macros;
 
         public bool UpdateDrawPosition { get; set; }
         public bool DisconnectionRequested { get; set; }
@@ -753,6 +757,16 @@ namespace ClassicUO.Game.Scenes
                 _time_cleanup = Time.Ticks + 500;
             }
 
+            if (_world.InGame && _world.Map != null && _world.Player != null)
+            {
+                if (_world.Player.X != _lastPreloadX || _world.Player.Y != _lastPreloadY)
+                {
+                    _lastPreloadX = _world.Player.X;
+                    _lastPreloadY = _world.Player.Y;
+                    _world.Map.PreloadChunksAround(_world.Player.X, _world.Player.Y, 3, 8);
+                }
+            }
+
             PacketHandlers.SendMegaClilocRequests(_world);
 
             if (_forceStopScene)
@@ -955,11 +969,6 @@ namespace ClassicUO.Game.Scenes
                 return false;
             }
 
-            if (CheckDeathScreen(batcher))
-            {
-                return true;
-            }
-
             Viewport r_viewport = batcher.GraphicsDevice.Viewport;
             Viewport camera_viewport = Camera.GetViewport();
             Matrix matrix = Camera.ViewTransformMatrix;
@@ -972,6 +981,9 @@ namespace ClassicUO.Game.Scenes
             DrawWorld(batcher, ref matrix, renderTargets);
 
             batcher.GraphicsDevice.Viewport = r_viewport;
+
+            // Keep world rendering while dead; death screen is only an overlay message.
+            CheckDeathScreen(batcher);
 
             return base.Draw(batcher, renderTargets);
         }

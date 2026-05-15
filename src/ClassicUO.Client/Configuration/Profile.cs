@@ -111,6 +111,7 @@ namespace ClassicUO.Configuration
         public bool UseOldStatusGump { get; set; }
         public bool StatusGumpBarMutuallyExclusive { get; set; } = true;
         public int BackpackStyle { get; set; }
+        public bool ShowAllLayersPaperdoll { get; set; } = true;
         public bool HighlightGameObjects { get; set; }
         public bool HighlightMobilesByParalize { get; set; } = true;
         public bool HighlightMobilesByPoisoned { get; set; } = true;
@@ -133,7 +134,7 @@ namespace ClassicUO.Configuration
         public bool SaveScaleAfterClose { get; set; }
         public bool RestoreScaleAfterUnpressCtrl { get; set; }
         public bool BandageSelfOld { get; set; } = true;
-        public bool EnableDeathScreen { get; set; } = true;
+        public bool EnableDeathScreen { get; set; } = false;
         public bool EnableBlackWhiteEffect { get; set; } = true;
         public int MaxScreenEffectSprites { get; set; }
         public int MaxDynamicLights { get; set; }
@@ -179,6 +180,8 @@ namespace ClassicUO.Configuration
         public bool ActivateChatAfterEnter { get; set; }
         public bool ActivateChatAdditionalButtons { get; set; } = true;
         public bool ActivateChatShiftEnterSupport { get; set; } = true;
+        public bool ChatInputAutoLineBreak { get; set; } = true;
+        public int ChatInputMaxCharsPerLine { get; set; } = 1000;
         public bool UseObjectsFading { get; set; } = true;
         public bool HoldDownKeyAltToCloseAnchored { get; set; } = true;
         public bool CloseAllAnchoredGumpsInGroupWithRightClick { get; set; } = false;
@@ -363,20 +366,11 @@ namespace ClassicUO.Configuration
 
         public bool OverheadPartyMessages { get; set; }
 
-        // Movement tuning
-        public int MovementTurnDelay { get; set; } = 100;
-        public int MovementTurnDelayFast { get; set; } = 80;
-        public int MovementWalkingDelay { get; set; } = 150;
-        public int MovementPlayerWalkingDelay { get; set; } = 150;
-        public bool MovementEnableAdaptiveDelays { get; set; } = false;
-        public int MovementAdaptiveMaxExtraDelay { get; set; } = 120;
-        public float MovementAdaptiveJitterWeight { get; set; } = 0.5f;
-        public bool MovementDebugOverlay { get; set; } = false;
-        public bool MovementDebugLog { get; set; } = false;
-
         // ---- Dust765 ----
         // Avoid Obstacles
         public bool AvoidObstacles { get; set; } = false;
+
+        public bool ForceGargoyleWalk { get; set; }
 
         // Barras HP/Mana/Stamina abaixo do char
         public bool NamePlateHealthBar { get; set; } = false;
@@ -407,7 +401,7 @@ namespace ClassicUO.Configuration
         // OnCasting Gump
         public bool OnCastingGump { get; set; } = false;
         public bool OnCastingGump_hidden { get; set; } = false;
-        public bool OnCastingUnderPlayerBar { get; set; } = true;
+        public bool OnCastingHarmfulHueOnPlayer { get; set; } = false;
 
         public bool TransparentHousesEnabled { get; set; } = false;
         public int TransparentHousesZ { get; set; } = 1;
@@ -416,6 +410,8 @@ namespace ClassicUO.Configuration
         // Invisible Houses
         public bool InvisibleHousesEnabled { get; set; } = false;
         public int InvisibleHousesZ { get; set; } = 1;
+        public bool HideInvulnerableMannequinNameplates { get; set; } = false;
+        public bool HideInvulnerableMannequinsOnInvisibleHouses { get; set; } = false;
         public int DontRemoveHouseBelowZ { get; set; } = 6;
 
         public bool ShowDeathOnWorldmap { get; set; } = false;

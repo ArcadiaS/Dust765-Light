@@ -103,6 +103,8 @@ namespace ClassicUO.Game.GameObjects
         internal ushort _surfaceOverheadCacheX = ushort.MaxValue;
         internal ushort _surfaceOverheadCacheY = ushort.MaxValue;
         internal int _surfaceOverheadCacheMaxZ = int.MinValue;
+        internal bool _surfaceOverheadCacheInvHouses;
+        internal int _surfaceOverheadCachePlayerZ = int.MinValue;
 
         private long _lastAnimationIdleDelay;
         private bool _isAnimationForwardDirection;
@@ -1066,6 +1068,7 @@ namespace ClassicUO.Game.GameObjects
             uint serial = Serial & 0x3FFFFFFF;
 
             ClearSteps();
+            ClearBuffs();
 
             base.Destroy();
 

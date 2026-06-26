@@ -2,13 +2,17 @@
 
 using System;
 using ClassicUO.Dust765;
+using ClassicUO.Dust765.External;
+using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Controls;
+using ClassicUO.Game.UI.Gumps;
 
 namespace ClassicUO.Game.UI.Gumps
 {
     internal partial class OptionsGump
     {
         private Checkbox _dust765AvoidObstacles;
+        private Checkbox _dust765AvoidObstaclesIgnoreHumanoids;
         private Checkbox _dust765ForceGargoyleWalk;
         private Checkbox _dust765UccBuffbar;
         private Checkbox _dust765UccSwing;
@@ -17,13 +21,13 @@ namespace ClassicUO.Game.UI.Gumps
         private Checkbox _dust765UseOldHealthBars;
         private Checkbox _dust765MultiUnderlinesParty;
         private Checkbox _dust765MultiUnderlinesBigBars;
-        private Checkbox _dust765BandageGump, _dust765BandageGumpUpDown;
+        private Checkbox _dust765BandageGump, _dust765BandageGumpUpDown, _dust765BandageGumpRound;
         private Checkbox _dust765OnCastingGump, _dust765OnCastingGumpHidden, _dust765OnCastingHarmfulHueOnPlayer;
         private Checkbox _dust765TransparentHouses;
         private Checkbox _dust765InvisibleHouses;
         private Checkbox _dust765ShowDeathOnWorldmap;
         private Checkbox _dust765GridContainer;
-        private Checkbox _dust765ShowAllLayersPaperdoll;
+        private Checkbox _dust765ShowAllLayersPaperdoll, _dust765HideHeadUnderCoveringRobe, _dust765ParrotOriginalView;
         private HSliderBar _dust765NamePlateOpacity;
         private HSliderBar _dust765MultiUnderlinesTransparency;
         private HSliderBar _dust765TransparentHousesZ;
@@ -84,6 +88,18 @@ namespace ClassicUO.Game.UI.Gumps
                     null,
                     "Avoid obstacles",
                     _currentProfile.AvoidObstacles,
+                    startX,
+                    startY
+                )
+            );
+
+            sectionMove.Add
+            (
+                _dust765AvoidObstaclesIgnoreHumanoids = AddCheckBox
+                (
+                    null,
+                    "Ignore humanoids when avoiding",
+                    _currentProfile.AvoidObstaclesIgnoreHumanoids,
                     startX,
                     startY
                 )
@@ -303,6 +319,18 @@ namespace ClassicUO.Game.UI.Gumps
                 )
             );
 
+            sectionBandage.Add
+            (
+                _dust765BandageGumpRound = AddCheckBox
+                (
+                    null,
+                    "Round style (off = bar)",
+                    _currentProfile.BandageGumpRoundStyle,
+                    startX,
+                    startY
+                )
+            );
+
             SettingsSection sectionCasting = AddSettingsSection(box, "Casting");
             sectionCasting.Y = sectionBandage.Bounds.Bottom + 40;
 
@@ -477,6 +505,30 @@ namespace ClassicUO.Game.UI.Gumps
                     null,
                     "Show all layers (ignore covered)",
                     _currentProfile.ShowAllLayersPaperdoll,
+                    startX,
+                    startY
+                )
+            );
+
+            sectionPaperdoll.Add
+            (
+                _dust765HideHeadUnderCoveringRobe = AddCheckBox
+                (
+                    null,
+                    "Hide head items under covering robes",
+                    _currentProfile.PaperdollHideHeadUnderCoveringRobe,
+                    startX,
+                    startY
+                )
+            );
+
+            sectionPaperdoll.Add
+            (
+                _dust765ParrotOriginalView = AddCheckBox
+                (
+                    null,
+                    "Parrot robe original paperdoll view",
+                    _currentProfile.PaperdollParrotOriginalView,
                     startX,
                     startY
                 )
@@ -828,6 +880,7 @@ namespace ClassicUO.Game.UI.Gumps
         internal void ApplyDust765Profile()
         {
             _currentProfile.AvoidObstacles = _dust765AvoidObstacles.IsChecked;
+            _currentProfile.AvoidObstaclesIgnoreHumanoids = _dust765AvoidObstaclesIgnoreHumanoids.IsChecked;
             _currentProfile.ForceGargoyleWalk = _dust765ForceGargoyleWalk.IsChecked;
             _currentProfile.UOClassicCombatBuffbar = _dust765UccBuffbar.IsChecked;
             _currentProfile.UOClassicCombatBuffbar_SwingEnabled = _dust765UccSwing.IsChecked;
@@ -841,6 +894,8 @@ namespace ClassicUO.Game.UI.Gumps
             UOClassicCombatSwingGump.RefreshOpenGump(World);
             _currentProfile.BandageGump = _dust765BandageGump.IsChecked;
             _currentProfile.BandageGumpUpDownToggle = _dust765BandageGumpUpDown.IsChecked;
+            _currentProfile.BandageGumpRoundStyle = _dust765BandageGumpRound.IsChecked;
+            BandageGump.RefreshOpenGump(World);
             _currentProfile.OnCastingGump = _dust765OnCastingGump.IsChecked;
             _currentProfile.OnCastingGump_hidden = _dust765OnCastingGumpHidden.IsChecked;
             _currentProfile.OnCastingHarmfulHueOnPlayer = _dust765OnCastingHarmfulHueOnPlayer.IsChecked;
@@ -854,6 +909,9 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.ShowDeathOnWorldmap = _dust765ShowDeathOnWorldmap.IsChecked;
             _currentProfile.GridContainerEnabled = _dust765GridContainer.IsChecked;
             _currentProfile.ShowAllLayersPaperdoll = _dust765ShowAllLayersPaperdoll.IsChecked;
+            _currentProfile.PaperdollHideHeadUnderCoveringRobe = _dust765HideHeadUnderCoveringRobe.IsChecked;
+            _currentProfile.PaperdollParrotOriginalView = _dust765ParrotOriginalView.IsChecked;
+            UIManager.GetGump<PaperDollGump>(World.Player?.Serial)?.RequestUpdateContents();
 
             // Art / Hue Changes
             _currentProfile.ColorStealth = _dust765ColorStealth.IsChecked;

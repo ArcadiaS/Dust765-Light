@@ -112,6 +112,8 @@ namespace ClassicUO.Configuration
         public bool StatusGumpBarMutuallyExclusive { get; set; } = true;
         public int BackpackStyle { get; set; }
         public bool ShowAllLayersPaperdoll { get; set; } = true;
+        public bool PaperdollHideHeadUnderCoveringRobe { get; set; } = false;
+        public bool PaperdollParrotOriginalView { get; set; } = true;
         public bool HighlightGameObjects { get; set; }
         public bool HighlightMobilesByParalize { get; set; } = true;
         public bool HighlightMobilesByPoisoned { get; set; } = true;
@@ -369,6 +371,7 @@ namespace ClassicUO.Configuration
         // ---- Dust765 ----
         // Avoid Obstacles
         public bool AvoidObstacles { get; set; } = false;
+        public bool AvoidObstaclesIgnoreHumanoids { get; set; } = false;
 
         public bool ForceGargoyleWalk { get; set; }
 
@@ -389,6 +392,7 @@ namespace ClassicUO.Configuration
         public Point UOClassicCombatBuffbarLocation { get; set; } = new Point(50, 50);
 
         public bool UseOldHealthBars { get; set; } = false;
+        public bool HealthBarShowDebuffTimers { get; set; } = true;
         public bool MultipleUnderlinesSelfParty { get; set; } = false;
         public bool MultipleUnderlinesSelfPartyBigBars { get; set; } = false;
         public int MultipleUnderlinesSelfPartyTransparency { get; set; } = 10;
@@ -396,7 +400,9 @@ namespace ClassicUO.Configuration
         // Bandage Gump
         public bool BandageGump { get; set; } = false;
         public bool BandageGumpUpDownToggle { get; set; } = false;
+        public bool BandageGumpRoundStyle { get; set; } = true;
         [JsonConverter(typeof(Point2Converter))] public Point BandageGumpOffset { get; set; } = new Point(0, 0);
+        [JsonConverter(typeof(Point2Converter))] public Point BandageGumpLocation { get; set; } = new Point(50, 50);
 
         // OnCasting Gump
         public bool OnCastingGump { get; set; } = false;
